@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Django
+*.log
+*.pot
+*.pyc
+# db.sqlite3
+media/
+staticfiles/
+
+# Environment variables
+.env
+.env.*.local
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker
+*.pid
+*.swp
+docker-compose.override.yml
+
+# PyCharm
+.idea/
+
+# Coverage reports
+htmlcov/
+.coverage
+*.cover
+*.py,cover
+.cache
+
+# Test artifacts
+nosetests.xml
+coverage.xml
+*.log
+
+
+# Temp files
+*.tmp
+*.bak
