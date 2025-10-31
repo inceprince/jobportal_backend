@@ -1,8 +1,8 @@
 pipeline {
-  agent none
+  agent any
 
   environment {
-    APP_ID = "L88h-MFTGdhexpR796h0y"
+    APP_ID = "L88h-MFTGdhexpR796h0y" 
   }
 
   parameters {
@@ -12,85 +12,49 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      agent any
       steps {
         checkout scm
       }
     }
 
     stage('Env setup') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-          args '--user root:root' // run as root so installs can happen if needed
-        }
-      }
       steps {
-        // create virtualenv in workspace (will be persisted in workspace mount)
-        sh 'python3 -m venv .venv'
-        sh '. .venv/bin/activate && pip install --upgrade pip'
+        sh 'python -m venv .venv'
       }
     }
 
     stage('Install requirements') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        sh '. .venv/bin/activate && pip install -r requirements.txt'
+        sh '.venv/bin/pip install -r requirements.txt'
       }
     }
 
     stage('Migrations') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        sh '. .venv/bin/activate && python manage.py makemigrations'
-        sh '. .venv/bin/activate && python manage.py migrate'
+        sh '.venv/bin/python manage.py makemigrations'
+        sh '.venv/bin/python manage.py migrate'
       }
     }
 
     stage('Unit Tests') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        sh '. .venv/bin/activate && python manage.py test'
+        sh '.venv/bin/python manage.py test'
       }
     }
 
     stage('Start Server') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        // run server in background (use nohup to ensure it doesn't get killed immediately)
-        sh 'nohup . .venv/bin/activate && python manage.py runserver 0.0.0.0:8000 >/dev/null 2>&1 &'
-        sh 'sleep 5'
+        sh '.venv/bin/python manage.py runserver 0.0.0.0:8000 &'
+        sh 'sleep 5' // wait for server to boot
       }
     }
 
     stage('API Test') {
-      agent {
-        docker {
-          image 'python:3.11-slim'
-        }
-      }
       steps {
-        sh '. .venv/bin/activate && python check.py'
+        sh '.venv/bin/python check.py'
       }
     }
-  }
-
+  }  
   post {
     success {
       echo "✅ Tests passed, triggering deployment API..."
@@ -106,9 +70,10 @@ pipeline {
             -H 'Content-Type: application/json' \
             -H "x-api-key: $DEPLOY_KEY" \
             --data-binary "$json_payload" \
-            -w "\\nHTTP %{http_code}\\n"
+            -w "\nHTTP %{http_code}\n"
         '''
       }
+      // Send success email notification
       mail to: 'princedev2112@gmail.com',
            subject: "Jenkins Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
            body: """Hello,
